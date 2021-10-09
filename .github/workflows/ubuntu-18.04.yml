@@ -1,0 +1,32 @@
+name: deploy
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+      runs-on: ubuntu-18.04
+      steps:
+          - uses: actions/setup-java@v2
+            with:
+              java-version: '11'
+              distribution: 'adopt'
+          - run: wget https://www-eu.apache.org/dist/ambari/ambari-2.7.5/apache-ambari-2.7.5-src.tar.gz
+          - run: tar xfvz apache-ambari-2.7.5-src.tar.gz
+          - run: |
+              cd apache-ambari-2.7.5-src && \
+              mvn versions:set -DnewVersion=2.7.5.0.0
+          - run: |
+              cd apache-ambari-2.7.5-src/ambari-metrics && \
+              mvn versions:set -DnewVersion=2.7.5.0.0
+          - run: |
+              cd apache-ambari-2.7.5-src && \
+              mvn -B clean install jdeb:jdeb -DnewVersion=2.7.5.0.0 -DbuildNumber=5895e4ed6b30a2da8a90fee2403b6cab91d19972 -DskipTests -Dpython.ver="python >= 2.6"
+          - uses: actions/upload-artifact@v2
+            with:
+              name: ambari-server
+              path: ./ambari-server*.deb
+          - uses: actions/upload-artifact@v2
+            with:
+              name: ambari-agent
+              path: ./ambari-agent*.deb
